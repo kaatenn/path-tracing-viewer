@@ -1,0 +1,37 @@
+﻿# Rider and Visual Studio specific
+*.userprefs
+*.suo
+*.user
+*.bak
+*.tmp
+*.vs
+*.vssscc
+*.vspscc
+*.sqlproj.user
+*.csproj.user
+*.vcxproj.user
+*.vcproj.user
+*.pdb
+*.obj
+*.cache
+*.dll
+*.exe
+
+# Build output
+/obj/
+/bin/
+/.vs
+/.idea
+
+# NuGet packages
+/packages/
+
+# Miscellaneous
+*.log
+*.vsix
+*.sln.docstates
+_ReSharper.*/
+
+# Publish profiles
+*.pubxml
+*.pubxml.user
