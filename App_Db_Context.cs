@@ -1,41 +1,44 @@
-﻿using _3D_viewer.models;
+﻿using System;
+using _3D_viewer.models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Org.BouncyCastle.Asn1.Mozilla;
-using System;
 
-namespace _3D_viewer.Data
+namespace _3D_viewer
 {
     public class App_Db_Context : DbContext
     {
-        public DbSet<Triangles> triangles { get; set; }
+        public DbSet<Vertices> vertices { get; set; }
         public DbSet<Faces> faces { get; set; }
 
-        public App_Db_Context(DbContextOptions<App_Db_Context> options) : base(options) { }
+        public App_Db_Context()
+        {
+        }
+
+        public App_Db_Context(DbContextOptions<App_Db_Context> options) : base(options)
+        {
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Triangles>().HasKey(t => t.id);
+            modelBuilder.Entity<Vertices>().HasKey(t => t.id);
 
-            modelBuilder.Entity<Faces>().HasKey(f => new { f.triangle1_id, f.triangle2_id, f.triangle3_id });
+            modelBuilder.Entity<Faces>().HasKey(f => new { triangle1_id = f.vertex1_id, triangle2_id = f.vertex2_id, triangle3_id = f.vertex3_id });
 
             modelBuilder.Entity<Faces>()
-                .HasOne(f => f.triangle1)
+                .HasOne(f => f.vertex1)
                 .WithMany(t => t.faces1)
-                .HasForeignKey(f => f.triangle1_id)
+                .HasForeignKey(f => f.vertex1_id)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Faces>()
-                .HasOne(f => f.triangle2)
+                .HasOne(f => f.vertex2)
                 .WithMany(t => t.faces2)
-                .HasForeignKey(f => f.triangle2_id)
+                .HasForeignKey(f => f.vertex2_id)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Faces>()
-                .HasOne(f => f.triangle3)
+                .HasOne(f => f.vertex3)
                 .WithMany(t => t.faces3)
-                .HasForeignKey(f => f.triangle3_id)
+                .HasForeignKey(f => f.vertex3_id)
                 .OnDelete(DeleteBehavior.Cascade);
         }
 
@@ -47,7 +50,5 @@ namespace _3D_viewer.Data
                     new MySqlServerVersion(new Version(8, 0, 30)));
             }
         }
-
-
     }
 }

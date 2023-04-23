@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:_3D_viewer"
         mc:Ignorable="d"
         Title="3D-Viewer" Height="720" Width="1080">
     <Grid>
@@ -13,13 +12,37 @@
             <ColumnDefinition Width="*" />
             <!-- Set the width of the second column to 2 times the width of the first column -->
         </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0">
-            <Border BorderBrush="Gray" BorderThickness="1" Background="#efefef">
-                <!-- Path tracing style ray tracing -->
-                
-            </Border>
-        </Grid>
-        
+        <Border Background="#efefef">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="15*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Button HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"
+                            Click="refresh_button_click"
+                            Background="#409EFF">
+                            <!-- 刷新按钮的图标 -->
+                            <Button.Content>
+                                <Grid Width="20" Height="20">
+                                    <Path
+                                        Data="M771.776 794.88A384 384 0 0 1 128 512h64a320 320 0 0 0 555.712 216.448H654.72a32 32 0 1 1 0-64h149.056a32 32 0 0 1 32 32v148.928a32 32 0 1 1-64 0v-50.56zM276.288 295.616h92.992a32 32 0 0 1 0 64H220.16a32 32 0 0 1-32-32V178.56a32 32 0 0 1 64 0v50.56A384 384 0 0 1 896.128 512h-64a320 320 0 0 0-555.776-216.384z"
+                                        Fill="White" Stretch="Uniform" />
+                                </Grid>
+                            </Button.Content>
+                        </Button>
+                    </Grid>
+
+
+                <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1, 0, 1, 1" Background="#efefef"
+                        HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Image x:Name="PathTracingImage" Height="675" Width="720">
+                        <!-- TODO Path tracing style ray tracing -->
+                    </Image>
+                </Border>
+            </Grid>
+        </Border>
+
         <!-- Input fields column -->
         <Grid Grid.Column="1">
             <!-- Define three rows for input fields -->
@@ -31,7 +54,7 @@
 
             <!-- The first row used for input triangle coordinates -->
             <Border BorderBrush="Gray" BorderThickness="1" Background="#efefef">
-                <Grid Grid.Row="0" HorizontalAlignment="Center">
+                <Grid HorizontalAlignment="Center">
                     <Grid Height="Auto" VerticalAlignment="Bottom">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -54,17 +77,17 @@
                                 <TextBlock Text="X:" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint1XTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                                 <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint1YTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                                 <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint1ZTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                             </StackPanel>
                         </Grid>
@@ -81,17 +104,17 @@
                                 <TextBlock Text="X:" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint2XTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                                 <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint2YTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                                 <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint2ZTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                             </StackPanel>
                         </Grid>
@@ -107,23 +130,32 @@
                                 <TextBlock Text="X:" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint3XTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                                 <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint3YTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                                 <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="TrianglePoint3ZTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
-                                         BorderBrush="#1976D2" BorderThickness="2" VerticalAlignment="Center"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
                                          PreviewTextInput="float_text_input_handler" />
                             </StackPanel>
                         </Grid>
                         <Grid Grid.Row="4">
-                            <Button Content="添加" Background="#2196F3" Foreground="White" BorderThickness="0" Padding="10 5" Margin="10" FontSize="16" FontWeight="Bold" Width="108" Height="Auto"
-                                    Click="button_increase_click"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid HorizontalAlignment="Right"><Button Content="添加" Background=" #337ecc" Foreground="White" BorderThickness="0"
+                                          Padding="10 5" Margin="10" FontSize="16" FontWeight="Bold" Width="108"
+                                          Height="Auto"
+                                          Click="button_increase_click" /></Grid>
+                            <Grid Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <CheckBox Content="镜面" Margin="5" Name="IsMirrorCheckBox"/>
+                            </Grid>
                         </Grid>
                     </Grid>
                 </Grid>

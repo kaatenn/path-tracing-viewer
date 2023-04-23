@@ -7,11 +7,8 @@ namespace _3D_viewer.Tracer;
 /// </summary>
 public class Scene_Object
 {
-    private List<Triangle> _triangles; // The list of triangles in the object.
-
-    public Bounding_Volume bounding_volume; // The bounding volume of the object.
-
-    private double refractive_index { get; set; } // the refractive index of the object.
+    private readonly List<Triangle> _triangles; // The list of triangles in the object.
+    private Bvh_Tree_Node? bvh_tree; // the BVH of the object
     
     /// <summary>
     /// Constructor to create an instance of the default Scene_Object class.
@@ -19,9 +16,23 @@ public class Scene_Object
     public Scene_Object()
     {
         _triangles = new List<Triangle>();
-        refractive_index = 1.0;
-        bounding_volume = new Bounding_Volume();
+        bvh_tree = null;
     }
-    
-    
+
+    /// <summary>
+    /// Refresh the BVH-Tree by triangles
+    /// </summary>
+    public void refresh_bvh()
+    {
+        bvh_tree = Bvh_Tree_Node.build_bvh(_triangles);
+    }
+
+    /// <summary>
+    /// Add triangle to this object and update the bounding volume
+    /// </summary>
+    /// <param name="triangle">Added triangle</param>
+    public void add_triangle(Triangle triangle)
+    {
+        _triangles.Add(triangle);
+    }
 }

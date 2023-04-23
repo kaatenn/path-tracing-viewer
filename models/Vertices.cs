@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace _3D_viewer.models
 {
-    public class Triangles
+    public class Vertices
     {
         public int id { get; set; }
         public double x { get; set; }
