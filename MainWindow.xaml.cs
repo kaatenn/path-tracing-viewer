@@ -55,28 +55,23 @@ public partial class MainWindow
     private byte[] path_tracing(byte[] pixelValues, int width, int height, int stride, int bytesPerPixel)
     {
         read_triangles();
+        scene_object.refresh_bvh();
+        var bvh = scene_object.bvh_tree;
         // 遍历所有像素并修改颜色
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
                 var index = y * stride + x * bytesPerPixel;
-                var b = pixelValues[index];
-                var g = pixelValues[index + 1];
-                var r = pixelValues[index + 2];
-                var a = pixelValues[index + 3];
-                var currentColor = Color.FromArgb(a, r, g, b);
 
-                var newColor = Color.FromArgb(0xFF, 0xA0, 0xCF, 0xFF);
-                var newA = (byte)(currentColor.A + newColor.A);
-                var newR = (byte)(currentColor.R + newColor.R);
-                var newG = (byte)(currentColor.G + newColor.G);
-                var newB = (byte)(currentColor.B + newColor.B);
-
-                pixelValues[index] = newB;
-                pixelValues[index + 1] = newG;
-                pixelValues[index + 2] = newR;
-                pixelValues[index + 3] = newA;
+                var newColor = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
+                var is_hit_triangle = scene_object.bvh_tree != null &&
+                                      Renderer.rendering(scene_object.bvh_tree, x, y, width, height, Math.PI * 2 / 3);
+                if (!is_hit_triangle) continue;
+                pixelValues[index] = newColor.B;
+                pixelValues[index + 1] = newColor.G;
+                pixelValues[index + 2] = newColor.R;
+                pixelValues[index + 3] = newColor.A;
             }
         }
 

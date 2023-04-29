@@ -10,17 +10,14 @@ namespace _3D_viewer.Tracer;
 /// </summary>
 public class Aabb
 {
-    private Vector3D min { get; set; } // The minimum vector of the bounding volume
-    private Vector3D max { get; set; } // The maximum vector of the bounding volume
-
-    private List<Triangle> _triangles { get; set; }
-
+    public Vector3D min { get; set; } // The minimum vector of the bounding volume
+    public Vector3D max { get; set; } // The maximum vector of the bounding volume
+    
     /// <summary>
-    /// Constructor to create an instance of new bounding volume
+    /// Constructor to create an instance of new bounding volume, could used for the leaf node of the BVH Tree
     /// </summary>
-    public Aabb(List<Triangle> triangles)
+    public Aabb(IEnumerable<Triangle> triangles)
     {
-        _triangles = triangles;
         var min_point = new Vector3D(float.MaxValue, float.MaxValue, float.MaxValue);
         var max_point = new Vector3D(float.MinValue, float.MinValue, float.MinValue);
         foreach (var vertex in triangles.SelectMany(triangle => triangle.vertices))
@@ -42,9 +39,8 @@ public class Aabb
     /// </summary>
     public Aabb()
     {
-        this._triangles = new List<Triangle>();
-        this.min = new Vector3D();
-        this.max = new Vector3D();
+        min = new Vector3D();
+        max = new Vector3D();
     }
 
     /// <summary>
@@ -56,6 +52,10 @@ public class Aabb
         return max = min;
     }
 
+    /// <summary>
+    /// Get the longest axis.
+    /// </summary>
+    /// <returns>The longest axis indicated by enum class Axis</returns>
     public Axis longest_axis()
     {
         var size = Size();

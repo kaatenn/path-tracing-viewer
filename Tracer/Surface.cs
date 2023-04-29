@@ -19,5 +19,6 @@ public class Surface
     {
         this.position = position;
         this.normal = normal;
+        this.normal.Normalize();
     }
 }

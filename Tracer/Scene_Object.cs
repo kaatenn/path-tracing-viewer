@@ -8,7 +8,7 @@ namespace _3D_viewer.Tracer;
 public class Scene_Object
 {
     private readonly List<Triangle> _triangles; // The list of triangles in the object.
-    private Bvh_Tree_Node? bvh_tree; // the BVH of the object
+    public Bvh_Tree_Node? bvh_tree { get; set; } // the BVH of the object
     
     /// <summary>
     /// Constructor to create an instance of the default Scene_Object class.
