@@ -11,13 +11,8 @@ namespace _3D_viewer.Tracer;
 /// </summary>
 public class Bvh_Tree_Node
 {
-    private Aabb aabb { get; set; } // the info(bounding box) of the node
-    private Bvh_Tree_Node? left_child { get; set; } // the left child
-    private Bvh_Tree_Node? right_child { get; set; } // the right child
-    private List<Triangle>? triangles { get; set; } // the triangle list of the node
-
     /// <summary>
-    /// Constructor to create an instance of the default BVH_Tree_Node class.
+    ///     Constructor to create an instance of the default BVH_Tree_Node class.
     /// </summary>
     /// <param name="aabb">The aabb of the node</param>
     /// <param name="left_child">The left child of the BVH-Tree node</param>
@@ -32,6 +27,11 @@ public class Bvh_Tree_Node
         this.triangles = triangles;
     }
 
+    private Aabb aabb { get; } // the info(bounding box) of the node
+    private Bvh_Tree_Node? left_child { get; } // the left child
+    private Bvh_Tree_Node? right_child { get; } // the right child
+    private List<Triangle>? triangles { get; init; } // the triangle list of the node
+
 
     /// <summary>
     ///     Create BVH Tree by static factory
@@ -41,10 +41,7 @@ public class Bvh_Tree_Node
     /// <returns></returns>
     public static Bvh_Tree_Node build_bvh(List<Triangle> triangles)
     {
-        if (triangles.Count <= 5)
-        {
-            return new Bvh_Tree_Node(new Aabb(triangles), null, null, triangles);
-        }
+        if (triangles.Count <= 5) return new Bvh_Tree_Node(new Aabb(triangles), null, null, triangles);
 
         var aabb = new Aabb(triangles);
         var split_axis = aabb.longest_axis();
@@ -73,13 +70,17 @@ public class Bvh_Tree_Node
     }
 
     /// <summary>
-    /// Assert the ray is intersect with any triangle in the object.
+    ///     Assert the ray is intersect with any triangle in the object.
     /// </summary>
     /// <param name="ray">the waiting ray</param>
     /// <returns>the time of the ray</returns>
-    private double intersect_triangle(Ray ray)
+    private Intersection intersect_triangle(Ray ray)
     {
         var t_min = double.MaxValue;
+        var hit_color = new byte[3];
+        var is_hit = false;
+        double cosine = 0;
+        Vector3D normal = new Vector3D();
         Debug.Assert(triangles != null, nameof(triangles) + " != null");
         foreach (var triangle in triangles)
         {
@@ -92,15 +93,30 @@ public class Bvh_Tree_Node
             var t_near = Vector3D.DotProduct(s2, e2) / Vector3D.DotProduct(s1, e1);
             var u = Vector3D.DotProduct(s1, s) / Vector3D.DotProduct(s1, e1);
             var v = Vector3D.DotProduct(s2, ray.direction) / Vector3D.DotProduct(s1, e1);
-            if (t_min > t_near && t_near > 0 && u >= 0 && v >= 0 && (1 - u - v) >= 0)
-            {
-                t_min = t_near;
-            }
+
+            if (!(t_min > t_near) || !(t_near > 0) || !(u >= 0) || !(v >= 0) || !(1 - u - v >= 0))
+                continue;
+            
+
+            var n = Vector3D.CrossProduct(e1, e2);
+            n.Normalize();
+            cosine = Math.Abs(Vector3D.DotProduct(n, ray.direction));
+            t_min = t_near;
+            hit_color = triangle.color;
+            is_hit = true;
+            normal = n;
         }
 
-        return t_min;
+        return new Intersection(is_hit, ray.origin + t_min * ray.direction, hit_color, t_min, cosine, normal);
     }
 
+    /// <summary>
+    ///     Check if the ray is intersecting with the axis align face
+    /// </summary>
+    /// <param name="ray">The checked ray</param>
+    /// <param name="location">The axis to check</param>
+    /// <param name="coordinate">The coordinate of the face</param>
+    /// <returns>Value t of the ray</returns>
     private double intersect_axis_align_face(Ray ray, int location, Vector3D coordinate)
     {
         var t = location switch
@@ -114,11 +130,11 @@ public class Bvh_Tree_Node
     }
 
     /// <summary>
-    /// check if the ray intersect with the AABB
+    ///     check if the ray intersect with the AABB
     /// </summary>
     /// <param name="ray">the checked ray</param>
-    /// <returns>the time of the ray, if the ray misses the AABB, then return double.MaxValue</returns>
-    public double intersect_aabb(Ray ray)
+    /// <returns>the intersect result of the ray</returns>
+    public Intersection intersect(Ray ray)
     {
         // Check if the ray is intersecting with the node's bounding box
 
@@ -138,10 +154,8 @@ public class Bvh_Tree_Node
         var t_exit = t_max.Min();
 
         if (t_enter > t_exit || t_exit < 0)
-        {
             //This condition means the ray is missing the bounding box.
-            return double.MaxValue;
-        }
+            return Intersection.not_hit_intersection();
 
         if (left_child == null && right_child == null)
         {
@@ -149,8 +163,8 @@ public class Bvh_Tree_Node
             return intersect_triangle(ray);
         }
 
-        var hit1 = left_child!.intersect_aabb(ray);
-        var hit2 = right_child!.intersect_aabb(ray);
+        var hit1 = left_child!.intersect(ray);
+        var hit2 = right_child!.intersect(ray);
 
         return hit1 < hit2 ? hit1 : hit2;
     }

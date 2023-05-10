@@ -8,10 +8,9 @@ namespace _3D_viewer.Tracer;
 public class Scene_Object
 {
     private readonly List<Triangle> _triangles; // The list of triangles in the object.
-    public Bvh_Tree_Node? bvh_tree { get; set; } // the BVH of the object
-    
+
     /// <summary>
-    /// Constructor to create an instance of the default Scene_Object class.
+    ///     Constructor to create an instance of the default Scene_Object class.
     /// </summary>
     public Scene_Object()
     {
@@ -19,8 +18,10 @@ public class Scene_Object
         bvh_tree = null;
     }
 
+    public Bvh_Tree_Node? bvh_tree { get; set; } // the BVH of the object
+
     /// <summary>
-    /// Refresh the BVH-Tree by triangles
+    ///     Refresh the BVH-Tree by triangles
     /// </summary>
     public void refresh_bvh()
     {
@@ -28,7 +29,7 @@ public class Scene_Object
     }
 
     /// <summary>
-    /// Add triangle to this object and update the bounding volume
+    ///     Add triangle to this object and update the bounding volume
     /// </summary>
     /// <param name="triangle">Added triangle</param>
     public void add_triangle(Triangle triangle)

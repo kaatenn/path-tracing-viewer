@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -19,12 +18,26 @@ namespace _3D_viewer;
 /// </summary>
 public partial class MainWindow
 {
-    private readonly WriteableBitmap writeable_bitmap; // The bitmap will be used for shading the image.
     private const double TOLERANCE = 1e-7; // For float comparing.
-    private readonly Scene_Object scene_object = new Scene_Object(); // the scenes object for shading.
+    private readonly Scene_Object scene_object = new(); // the scenes object for shading.
+    private readonly WriteableBitmap writeable_bitmap; // The bitmap will be used for shading the image.
 
     /// <summary>
-    /// create a framework for modify the pixels.
+    ///     Constructor of the main window
+    /// </summary>
+    public MainWindow()
+    {
+        InitializeComponent();
+        // Initialize the bitmap
+        writeable_bitmap =
+            new WriteableBitmap((int)PathTracingImage.Width, (int)PathTracingImage.Width, 96, 96, PixelFormats.Bgr32,
+                null);
+
+        Loaded += (_, _) => { PathTracingImage.Source = writeable_bitmap; };
+    }
+
+    /// <summary>
+    ///     create a framework for modify the pixels.
     /// </summary>
     private void modify_pixels()
     {
@@ -44,57 +57,48 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Managing the path tracing
+    ///     Managing the path tracing
     /// </summary>
-    /// <param name="pixelValues">The pixel value for the image.</param>
+    /// <param name="pixel_values">The pixel value for the image.</param>
     /// <param name="width">The width of the pixel value.</param>
     /// <param name="height">The height of the pixel value.</param>
     /// <param name="stride">The address stride between every pixel.</param>
-    /// <param name="bytesPerPixel">The memory every pixel used.</param>
+    /// <param name="bytes_per_pixel">The memory every pixel used.</param>
     /// <returns></returns>
-    private byte[] path_tracing(byte[] pixelValues, int width, int height, int stride, int bytesPerPixel)
+    private byte[] path_tracing(byte[] pixel_values, int width, int height, int stride, int bytes_per_pixel)
     {
-        read_triangles();
-        scene_object.refresh_bvh();
-        var bvh = scene_object.bvh_tree;
         // 遍历所有像素并修改颜色
         for (var y = 0; y < height; y++)
+        for (var x = 0; x < width; x++)
         {
-            for (var x = 0; x < width; x++)
-            {
-                var index = y * stride + x * bytesPerPixel;
+            var index = y * stride + x * bytes_per_pixel;
 
-                var newColor = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
-                var is_hit_triangle = scene_object.bvh_tree != null &&
-                                      Renderer.rendering(scene_object.bvh_tree, x, y, width, height, Math.PI * 2 / 3);
-                if (!is_hit_triangle) continue;
-                pixelValues[index] = newColor.B;
-                pixelValues[index + 1] = newColor.G;
-                pixelValues[index + 2] = newColor.R;
-                pixelValues[index + 3] = newColor.A;
-            }
+            var newColor = new byte[3];
+            if (scene_object.bvh_tree != null)
+                newColor = Renderer.render_direct(scene_object.bvh_tree, x, y, width, height, Math.PI * 2 / 3);
+            pixel_values[index] = newColor[2];
+            pixel_values[index + 1] = newColor[1];
+            pixel_values[index + 2] = newColor[0];
+            pixel_values[index + 3] = 255;
         }
 
-        return pixelValues;
+        return pixel_values;
     }
 
-    public MainWindow()
-    {
-        InitializeComponent();
-        writeable_bitmap =
-            new WriteableBitmap(720, 675, 96, 96, PixelFormats.Bgr32, null);
-
-        Loaded += (_, _) => { PathTracingImage.Source = writeable_bitmap; };
-    }
-
+    /// <summary>
+    ///     Check if the input number is a float and it's between 0 to 1
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
     private void float_text_input_handler(object sender, TextCompositionEventArgs e)
     {
+        ((TextBox)sender).BorderBrush = new SolidColorBrush(Color.FromRgb(0x40, 0x9E, 0xFF));
         // Check if the input is in float format using regular expression
-        var regex = new Regex("^-?[0-9]*\\.?[0-9]*$");
-        var isFloat = regex.IsMatch(e.Text);
+        var regex = new Regex("^-?[0-1]*\\.?[0-9]*$");
+        var is_format = regex.IsMatch(e.Text);
 
         // If the input is not in float format, disable input
-        if (!isFloat)
+        if (!is_format)
         {
             e.Handled = true;
             return;
@@ -105,17 +109,19 @@ public partial class MainWindow
         var value = float.Parse((sender as TextBox)?.Text + e.Text);
 
         // If the input is not between 0 and 1, disable input
-        if (value is >= -1 and <= 1) return;
+        if ((!((TextBox)sender).Name.Contains('Z') && value is >= -1 and <= 1) ||
+            (((TextBox)sender).Name.Contains('Z') && value is >= -1 and <= 0)) return;
 
-        var text_block = (TextBlock?)FindName("TrianglePointsTextBlock");
-        if (text_block == null) return;
-        text_block.Foreground = new SolidColorBrush(Colors.Red);
-        Task.Delay(3000).ContinueWith(_ =>
-            text_block.Dispatcher.Invoke(() => text_block.Foreground = new SolidColorBrush(Colors.Black)));
+        ((TextBox)sender).BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0x6C, 0x6C));
 
         e.Handled = true;
     }
 
+    /// <summary>
+    ///     The increase button click event, it will add one triangle into the database if it is legal.
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
     private void button_increase_click(object sender, RoutedEventArgs e)
     {
         try
@@ -164,8 +170,7 @@ public partial class MainWindow
             // Create new face with vertex ids
             var new_face = new Faces
             {
-                vertex1_id = vertex1.id, vertex2_id = vertex2.id, vertex3_id = vertex3.id,
-                is_mirror = IsMirrorCheckBox.IsChecked
+                vertex1_id = vertex1.id, vertex2_id = vertex2.id, vertex3_id = vertex3.id
             };
             db_context.faces.Add(new_face);
             db_context.SaveChanges();
@@ -179,21 +184,18 @@ public partial class MainWindow
             TrianglePoint1ZTextBox.Text = "";
             TrianglePoint2ZTextBox.Text = "";
             TrianglePoint3ZTextBox.Text = "";
-            IsMirrorCheckBox.IsChecked = false;
+
+            AddButton.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x9E, 0xFF));
         }
         catch (Exception)
         {
-            var text_block = (TextBlock?)FindName("TrianglePointsTextBlock");
-            if (text_block != null)
-            {
-                text_block.Foreground = new SolidColorBrush(Colors.Red);
-                Task.Delay(3000).ContinueWith(_ =>
-                    text_block.Dispatcher.Invoke(() => text_block.Foreground = new SolidColorBrush(Colors.Black)));
-                throw;
-            }
+            AddButton.Background = new SolidColorBrush(Color.FromRgb(0xF5, 0x6C, 0x6C));
         }
     }
 
+    /// <summary>
+    ///     Read all triangles from the database, you must refresh the BVH-Tree after this
+    /// </summary>
     private void read_triangles()
     {
         var triangles = new List<Triangle>();
@@ -215,20 +217,24 @@ public partial class MainWindow
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.x ?? 0,
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.y ?? 0,
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.z ?? 0);
-            var triangle = new Triangle(triangleVertices, face.is_mirror != null && face.is_mirror.Value ? 0.95 : 0.05);
+            var triangle = new Triangle(triangleVertices, new byte[] { 0xf5, 0x6c, 0x6c });
             triangles.Add(triangle);
         }
 
-        foreach (var triangle in triangles)
-        {
-            scene_object.add_triangle(triangle);
-        }
+        foreach (var triangle in triangles) scene_object.add_triangle(triangle);
 
         scene_object.refresh_bvh();
     }
 
+    /// <summary>
+    ///     The refresh button click handler, it will refresh the bitmap.
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
     private void refresh_button_click(object sender, RoutedEventArgs e)
     {
+        read_triangles();
+        scene_object.refresh_bvh();
         modify_pixels();
     }
 }
