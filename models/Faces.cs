@@ -7,10 +7,13 @@ public class Faces
     public int vertex3_id { get; set; }
 
     public bool? is_mirror { get; set; }
+    public int object_id { get; set; }
 
     public Vertices? vertex1 { get; set; }
     public Vertices? vertex2 { get; set; }
     public Vertices? vertex3 { get; set; }
+    
+    public Objects? objects { get; set; }
 
     public override bool Equals(object? obj)
     {
