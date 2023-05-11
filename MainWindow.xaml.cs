@@ -16,11 +16,25 @@ namespace _3D_viewer;
 /// <summary>
 ///     Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow
+public partial class MainWindow : Window
 {
     private const double TOLERANCE = 1e-7; // For float comparing.
     private readonly Scene_Object scene_object = new(); // the scenes object for shading.
     private readonly WriteableBitmap writeable_bitmap; // The bitmap will be used for shading the image.
+
+    public Color general_color
+    {
+        get => (Color)GetValue(general_color_property);
+        set => SetValue(general_color_property, value);
+    }
+
+    public readonly static DependencyProperty general_color_property =
+        DependencyProperty.Register(nameof(general_color), typeof(Color), typeof(MainWindow), new PropertyMetadata(Colors.Red));
+
+    private List<string> object_add_list;
+    private List<string> object_rendered_list;
+    private Color detail_color;
+
 
     /// <summary>
     ///     Constructor of the main window
@@ -32,8 +46,59 @@ public partial class MainWindow
         writeable_bitmap =
             new WriteableBitmap((int)PathTracingImage.Width, (int)PathTracingImage.Width, 96, 96, PixelFormats.Bgr32,
                 null);
-
         Loaded += (_, _) => { PathTracingImage.Source = writeable_bitmap; };
+        general_color = Colors.White;
+        detail_color = Colors.White;
+        ColorPickerShow.Background = new SolidColorBrush(detail_color);
+        DataContext = this;
+        refresh_lists();
+    }
+
+    /// <summary>
+    /// Refresh all list in the UI
+    /// </summary>
+    private void refresh_lists()
+    {
+        object_add_list = read_object();
+        object_add_list.Add("新建物体...");
+
+        ObjectSelectAddComboBox.ItemsSource = object_add_list;
+        ObjectSelectAddComboBox.SelectedIndex = 0;
+        if (object_add_list.Count == 1)
+        {
+            ObjectSelectAddComboBox.Text = "";
+            ObjectSelectAddComboBox.IsEditable = true;
+        }
+        else
+        {
+            ObjectSelectAddComboBox.Text = (string)ObjectSelectAddComboBox.SelectedItem;
+            ObjectSelectAddComboBox.IsEditable = false;
+        }
+
+        object_rendered_list = read_object();
+
+        ObjectSelectRenderedComboBox.ItemsSource = object_rendered_list;
+        if (object_rendered_list.Count == 0)
+        {
+            ObjectSelectRenderedComboBox.IsEnabled = false;
+            ButtonRefresh.IsEnabled = false;
+        }
+        else
+        {
+            ObjectSelectRenderedComboBox.SelectedIndex = 0;
+        }
+    }
+
+    /// <summary>
+    /// Read all object names from the database
+    /// </summary>
+    /// <returns>The name list</returns>
+    private static List<string> read_object()
+    {
+        using var db = new App_Db_Context();
+        var objects = db.objects.ToList();
+        var result = objects.Select(obj => obj.object_name).ToList();
+        return result;
     }
 
     /// <summary>
@@ -135,6 +200,7 @@ public partial class MainWindow
             var x3 = float.Parse(TrianglePoint3XTextBox.Text);
             var y3 = float.Parse(TrianglePoint3YTextBox.Text);
             var z3 = float.Parse(TrianglePoint3ZTextBox.Text);
+            var obj_name = ObjectSelectAddComboBox.Text;
 
             using var db_context = new App_Db_Context();
             // Check if vertices exist in database, and get their ids
@@ -144,33 +210,54 @@ public partial class MainWindow
                 Math.Abs(v.x - x2) < TOLERANCE && Math.Abs(v.y - y2) < TOLERANCE && Math.Abs(v.z - z2) < TOLERANCE);
             var vertex3 = db_context.vertices.FirstOrDefault(v =>
                 Math.Abs(v.x - x3) < TOLERANCE && Math.Abs(v.y - y3) < TOLERANCE && Math.Abs(v.z - z3) < TOLERANCE);
+            var obj = db_context.objects.FirstOrDefault(o => obj_name == o.object_name);
 
             // Add new vertices to database if they don't exist and get their ids
             if (vertex1 == null)
             {
-                vertex1 = new Vertices { x = x1, y = y1, z = z1 };
+                vertex1 = new Vertices
+                {
+                    x = x1, y = y1, z = z1
+                };
                 db_context.vertices.Add(vertex1);
                 db_context.SaveChanges();
             }
 
             if (vertex2 == null)
             {
-                vertex2 = new Vertices { x = x2, y = y2, z = z2 };
+                vertex2 = new Vertices
+                {
+                    x = x2, y = y2, z = z2
+                };
                 db_context.vertices.Add(vertex2);
                 db_context.SaveChanges();
             }
 
             if (vertex3 == null)
             {
-                vertex3 = new Vertices { x = x3, y = y3, z = z3 };
+                vertex3 = new Vertices
+                {
+                    x = x3, y = y3, z = z3
+                };
                 db_context.vertices.Add(vertex3);
                 db_context.SaveChanges();
+            }
+
+            if (obj == null)
+            {
+                var new_object = new Objects
+                {
+                    object_name = obj_name
+                };
+                db_context.objects.Add(new_object);
+                db_context.SaveChanges();
+                obj = new_object;
             }
 
             // Create new face with vertex ids
             var new_face = new Faces
             {
-                vertex1_id = vertex1.id, vertex2_id = vertex2.id, vertex3_id = vertex3.id
+                vertex1_id = vertex1.id, vertex2_id = vertex2.id, vertex3_id = vertex3.id, object_id = obj.object_id
             };
             db_context.faces.Add(new_face);
             db_context.SaveChanges();
@@ -184,8 +271,10 @@ public partial class MainWindow
             TrianglePoint1ZTextBox.Text = "";
             TrianglePoint2ZTextBox.Text = "";
             TrianglePoint3ZTextBox.Text = "";
-
+            ObjectSelectAddComboBox.Text = "";
+            
             AddButton.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x9E, 0xFF));
+            refresh_lists();
         }
         catch (Exception)
         {
@@ -198,10 +287,14 @@ public partial class MainWindow
     /// </summary>
     private void read_triangles()
     {
+        
         var triangles = new List<Triangle>();
         using var context = new App_Db_Context();
         var vertices = context.vertices.ToList();
-        var faces = context.faces.ToList();
+        var obj_id = context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!.object_id;
+        var faces = context.faces
+            .Where(f => f.object_id == obj_id)
+            .ToList();
         foreach (var face in faces)
         {
             var triangleVertices = new Vector3D[3];
@@ -217,13 +310,14 @@ public partial class MainWindow
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.x ?? 0,
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.y ?? 0,
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.z ?? 0);
-            var triangle = new Triangle(triangleVertices, new byte[] { 0xf5, 0x6c, 0x6c });
+            var triangle = new Triangle(triangleVertices, new byte[]
+            {
+                detail_color.R, detail_color.G, detail_color.B
+            });
             triangles.Add(triangle);
         }
 
         foreach (var triangle in triangles) scene_object.add_triangle(triangle);
-
-        scene_object.refresh_bvh();
     }
 
     /// <summary>
@@ -233,8 +327,154 @@ public partial class MainWindow
     /// <param name="e">The instance of the event</param>
     private void refresh_button_click(object sender, RoutedEventArgs e)
     {
+        scene_object.clear_triangles();
         read_triangles();
         scene_object.refresh_bvh();
         modify_pixels();
+    }
+
+    private void ColorDetailPicker_OnMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        // Add mouse move event
+        ColorDetailPicker.MouseMove += ColorDetailPicker_OnMouseMove;
+    }
+
+    private void ColorDetailPicker_OnMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        // Release mouse move event
+        ColorDetailPicker.MouseMove -= ColorDetailPicker_OnMouseMove;
+    }
+
+    /// <summary>
+    /// Select color by mouse position and general color selector
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
+    private void ColorDetailPicker_OnMouseMove(object sender, MouseEventArgs e)
+    {
+        var mouse_position = Mouse.GetPosition(ColorDetailPicker);
+        var mid_pos = ColorDetailPicker.Width / 2;
+        if (mouse_position.X < mid_pos && mouse_position.X > 0)
+        {
+            var offset_r = general_color.R / mid_pos;
+            var offset_g = general_color.G / mid_pos;
+            var offset_b = general_color.B / mid_pos;
+            var offset_p = mouse_position.X;
+            var r = offset_r * offset_p;
+            var g = offset_g * offset_p;
+            var b = offset_b * offset_p;
+            detail_color = Color.FromRgb((byte)r, (byte)g, (byte)b);
+            ColorPickerShow.Background = new SolidColorBrush(detail_color);
+        }
+        else if (mouse_position.X >= mid_pos && mouse_position.X < ColorDetailPicker.Width)
+        {
+            var offset_r = (255 - general_color.R) / mid_pos;
+            var offset_g = (255 - general_color.G) / mid_pos;
+            var offset_b = (255 - general_color.B) / mid_pos;
+            var offset_p = mouse_position.X - mid_pos;
+            var r = offset_r * offset_p + general_color.R;
+            var g = offset_g * offset_p + general_color.G;
+            var b = offset_b * offset_p + general_color.B;
+            detail_color = Color.FromRgb((byte)r, (byte)g, (byte)b);
+            ColorPickerShow.Background = new SolidColorBrush(detail_color);
+        }
+        else if (mouse_position.X < 0)
+        {
+            detail_color = Colors.Black;
+            ColorPickerShow.Background = new SolidColorBrush(detail_color);
+        }
+        else
+        {
+            detail_color = Colors.White;
+            ColorPickerShow.Background = new SolidColorBrush(detail_color);
+        }
+    }
+
+    private void ColorGeneralPicker_OnMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        ColorGeneralPicker.MouseMove += ColorGeneralPicker_OnMouseMove;
+    }
+
+    private void ColorGeneralPicker_OnMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        ColorGeneralPicker.MouseMove -= ColorGeneralPicker_OnMouseMove;
+    }
+
+    /// <summary>
+    /// Select general color
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
+    private void ColorGeneralPicker_OnMouseMove(object sender, MouseEventArgs e)
+    {
+        var color = general_color;
+
+        var mouse_y = Mouse.GetPosition(ColorGeneralPicker).Y;
+        var ratio_y = mouse_y / ColorGeneralPicker.Height;
+
+        switch (ratio_y)
+        {
+            case < 0:
+                color = Colors.Black;
+                break;
+            case < 0.142:
+                color.R = (byte)(255 * ratio_y / 0.142);
+                color.G = 0;
+                color.B = 0;
+                break;
+            case >= 0.142 and < 0.285:
+                color.R = 0xff;
+                color.G = (byte)(255 * (ratio_y - 0.142) / 0.142);
+                color.B = 0;
+                break;
+            case >= 0.285 and < 0.428:
+                color.R = (byte)(255 - 255 * (ratio_y - 0.285) / 0.142);
+                color.G = 0xff;
+                color.B = 0;
+                break;
+            case >= 0.428 and < 0.571:
+                color.R = 0;
+                color.G = 0xff;
+                color.B = (byte)(255 * (ratio_y - 0.428) / 0.142);
+                break;
+            case >= 0.571 and < 0.714:
+                color.R = 0;
+                color.G = (byte)(255 - 255 * (ratio_y - 0.571) / 0.142);
+                color.B = 0xff;
+                break;
+            case >= 0.714 and < 0.857:
+                color.R = (byte)(255 * (ratio_y - 0.714) / 0.142);
+                color.G = 0;
+                color.B = 0xff;
+                break;
+            case >= 0.857 and < 1:
+                color.R = 0xff;
+                color.G = (byte)(255 * (ratio_y - 0.857) / 0.142);
+                color.B = 0xff;
+                break;
+            default:
+                color = Colors.White;
+                break;
+        }
+
+        general_color = color;
+        detail_color = color;
+
+        ColorPickerShow.Background = new SolidColorBrush(detail_color);
+    }
+
+    private void ObjectSelectComboBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if ((string)ObjectSelectAddComboBox.SelectedItem != "新建物体...")
+        {
+            ObjectSelectAddComboBox.Text = (string)ObjectSelectAddComboBox.SelectedItem;
+            ObjectSelectAddComboBox.IsEditable = false;
+        }
+        else
+        {
+            ObjectSelectAddComboBox.Text = "";
+            ObjectSelectAddComboBox.IsEditable = true;
+            e.Handled = true;
+        }
     }
 }

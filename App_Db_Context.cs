@@ -16,7 +16,6 @@ public class App_Db_Context : DbContext
 
     public DbSet<Vertices> vertices { get; set; }
     public DbSet<Faces> faces { get; set; }
-    
     public DbSet<Objects> objects { get; set; }
 
     protected override void OnModelCreating(ModelBuilder model_builder)

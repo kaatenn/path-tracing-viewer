@@ -29,6 +29,14 @@ public class Scene_Object
     }
 
     /// <summary>
+    ///     Clear the BVH-Tree
+    /// </summary>
+    public void clear_triangles()
+    {
+        _triangles.Clear();
+    }
+
+    /// <summary>
     ///     Add triangle to this object and update the bounding volume
     /// </summary>
     /// <param name="triangle">Added triangle</param>

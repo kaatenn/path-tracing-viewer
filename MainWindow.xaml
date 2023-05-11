@@ -24,7 +24,7 @@
                     <RowDefinition Height="12*" />
                 </Grid.RowDefinitions>
                 <Grid>
-                    <Button HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"
+                    <Button HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" x:Name="ButtonRefresh"
                             Click="refresh_button_click"
                             Background="#409EFF">
                         <!-- 刷新按钮的图标 -->
@@ -52,14 +52,33 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="2*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- The first row used for input triangle coordinates -->
             <Border BorderBrush="Gray" BorderThickness="1" Background="#efefef">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="浏览..." VerticalAlignment="Center"></TextBlock>
+                    <ComboBox x:Name="ObjectSelectRenderedComboBox"
+                              Margin="5 5 5 10"
+                              Width="108"
+                              FontSize="16"
+                              BorderBrush="#409EFF"
+                              BorderThickness="2"
+                              VerticalAlignment="Center"
+                              IsTextSearchEnabled="True"
+                              IsEditable="False"
+                              ItemsSource="{Binding ObjectList}"
+                              SelectionChanged="ObjectSelectComboBox_OnSelectionChanged"
+                    >
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+            <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Background="#efefef">
                 <Grid HorizontalAlignment="Center">
                     <Grid Height="Auto" VerticalAlignment="Bottom">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -144,7 +163,25 @@
                                          PreviewTextInput="float_text_input_handler" />
                             </StackPanel>
                         </Grid>
-                        <Grid Grid.Row="4">
+                        <Grid Grid.Row="4" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="物体名：" VerticalAlignment="Center"></TextBlock>
+                                <ComboBox x:Name="ObjectSelectAddComboBox"
+                                          Margin="5 5 5 10"
+                                          Width="108"
+                                          FontSize="16"
+                                          BorderBrush="#409EFF"
+                                          BorderThickness="2"
+                                          VerticalAlignment="Center"
+                                          IsTextSearchEnabled="True"
+                                          IsEditable="False"
+                                          ItemsSource="{Binding ObjectList}"
+                                          SelectionChanged="ObjectSelectComboBox_OnSelectionChanged"
+                                >
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Row="5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="3*" />
                                 <ColumnDefinition Width="2*" />
@@ -162,42 +199,164 @@
                                               hc:Poptip.Content="{StaticResource Rule}"
                                               hc:Poptip.Placement="Bottom"
                                               HorizontalAlignment="Left"
-                                              Margin="10 0 0 0 "
+                                              Margin="10 0 0 0"
                                               Content="规则" />
                             </Grid>
                         </Grid>
                     </Grid>
                 </Grid>
             </Border>
-            <Border Grid.Row="1" Background="#efefef" BorderBrush="Gray" BorderThickness="1">
+            <Border Grid.Row="2" Background="#efefef" BorderBrush="Gray" BorderThickness="1">
+                <Grid HorizontalAlignment="Center">
+                    <Grid Height="Auto" VerticalAlignment="Bottom">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock HorizontalAlignment="Left" Margin="5" Text="修改/删除三角形"
+                                   Style="{StaticResource TextBlockLargeBold}" />
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="X:" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint1XTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                                <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint1YTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                                <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint1ZTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="X:" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint2XTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                                <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint2YTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                                <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint2ZTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Row="3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="X:" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint3XTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                                <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint3YTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                                <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
+                                <TextBox Name="UpdateTrianglePoint3ZTextBox" Margin="5 0 5 0" Width="48"
+                                         FontSize="16"
+                                         BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
+                                         PreviewTextInput="float_text_input_handler" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Row="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid HorizontalAlignment="Right">
+                                <Button Content="修改" Style="{StaticResource ButtonInfo}"
+                                        Width="80px"
+                                        Click="button_increase_click" Margin="0 0 0 5"
+                                        Name="UpdateButton"
+                                        Background="#409EFF" />
+                            </Grid>
+                            <Grid Column="1">
+                                <ToggleButton hc:Poptip.HitMode="None"
+                                              hc:Poptip.IsOpen="{Binding IsChecked,RelativeSource={RelativeSource Self}}"
+                                              hc:Poptip.Content="{StaticResource Rule}"
+                                              hc:Poptip.Placement="Bottom"
+                                              HorizontalAlignment="Left"
+                                              Margin="10 0 0 0"
+                                              Content="规则" />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+            <Border Grid.Row="3" Background="#efefef" BorderBrush="Gray" BorderThickness="1">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="6*" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Rectangle Width="180" Height="180" HorizontalAlignment="Right" Margin="0 0 20 0">
+                    <Rectangle Width="180" Height="180" HorizontalAlignment="Right" Margin="0 0 20 0"
+                               Name="ColorDetailPicker" MouseDown="ColorDetailPicker_OnMouseDown"
+                               MouseUp="ColorDetailPicker_OnMouseUp">
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0, 0.5" EndPoint="1, 0.5">
-                                <GradientStop Color="White" />
-                                <GradientStop Color="Red" Offset="0.5" />
-                                <GradientStop Color="Black" Offset="1" />
+                                <GradientStop Color="Black" />
+                                <GradientStop Color="{Binding general_color, Mode=TwoWay}" Offset="0.5" />
+                                <GradientStop Color="White" Offset="1" />
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <Rectangle Grid.Column="1" Width="25" Height="180" HorizontalAlignment="Left">
+                    <Rectangle Grid.Column="1" Width="25" Height="180" HorizontalAlignment="Left"
+                               Name="ColorGeneralPicker" MouseDown="ColorGeneralPicker_OnMouseDown"
+                               MouseUp="ColorGeneralPicker_OnMouseUp">
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0.5, 0" EndPoint="0.5, 1">
-                                <GradientStop Color="#000000" Offset="0"/>
-                                <GradientStop Color="#ff0000" Offset="0.142"/>
-                                <GradientStop Color="#ffff00" Offset="0.285"/>
-                                <GradientStop Color="#00ff00" Offset="0.428"/>
-                                <GradientStop Color="#00ffff" Offset="0.571"/>
-                                <GradientStop Color="#0000ff" Offset="0.714"/>
-                                <GradientStop Color="#ff00ff" Offset="0.857"/>
-                                <GradientStop Color="#ffffff" Offset="1"/>
+                                <GradientStop Color="#000000" Offset="0" />
+                                <GradientStop Color="#ff0000" Offset="0.142" />
+                                <GradientStop Color="#ffff00" Offset="0.285" />
+                                <GradientStop Color="#00ff00" Offset="0.428" />
+                                <GradientStop Color="#00ffff" Offset="0.571" />
+                                <GradientStop Color="#0000ff" Offset="0.714" />
+                                <GradientStop Color="#ff00ff" Offset="0.857" />
+                                <GradientStop Color="#ffffff" Offset="1" />
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
+                    <Border Grid.Column="2">
+                        <Border Width="30" Height="30" VerticalAlignment="Top" Name="ColorPickerShow">
+                        </Border>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>
