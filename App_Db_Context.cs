@@ -52,10 +52,10 @@ public class App_Db_Context : DbContext
             .OnDelete(DeleteBehavior.Cascade);
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder options_builder)
     {
-        if (!optionsBuilder.IsConfigured)
-            optionsBuilder.UseMySql("server=localhost;database=model;user=root;password=Zn+H2SO4",
+        if (!options_builder.IsConfigured)
+            options_builder.UseMySql("server=localhost;database=model;user=root;password=Zn+H2SO4",
                 new MySqlServerVersion(new Version(8, 0, 30)));
     }
 }
