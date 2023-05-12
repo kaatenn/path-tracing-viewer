@@ -8,7 +8,7 @@ namespace _3D_viewer.Tracer;
 /// </summary>
 public static class Renderer
 {
-    private const int SAMPLE_TIME = 4;
+    private const int SAMPLE_TIME = 4; /* 1600 */
 
     /// <summary>
     ///     Render the input pixel
@@ -46,6 +46,7 @@ public static class Renderer
                                                            Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
                     Math.PI * intersect.cosine), 255)
             };
+            /*render_result = shade(intersect, Bvh_Tree_Node root);*/
             color.X += render_result[0];
             color.Y += render_result[1];
             color.Z += render_result[2];
@@ -56,6 +57,67 @@ public static class Renderer
 
         return result;
     }
+
+    /*
+    /// <summary>
+    /// Recursively shade the pixel
+    /// </summary>
+    /// <param name="intersect">The former intersect</param>
+    /// <returns>Rendering result color</returns>
+    private static byte[] shade(Intersection intersect, Bvh_Tree_Node root)
+    {
+        const int P_RR = 4;
+        var random = new Random();
+        var rr = random.Next(0, 6);
+
+        if (rr < P_RR)
+        {
+            var ray = new Ray(intersect.coordinate, new Vector3D(random.NextDouble(), random.NextDouble(), random.NextDouble()));
+            if (Math.Abs(-ray.origin.X / ray.direction.X - -ray.origin.Y / ray.direction.Y) < 10e-7 && Math.Abs(-ray.origin.X / ray.direction.X - -ray.origin.Z / ray.direction.Z) < 10e-7)
+            {
+                var render_result = new[]
+                {
+                    (byte)Math.Min(intersect.color[0] * 0.08 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
+                                                                 Math.Pow(intersect.coordinate.Y - 0, 2) +
+                                                                 Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
+                        Math.PI * intersect.cosine), 255),
+                    (byte)Math.Min(intersect.color[1] * 0.08 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
+                                                                 Math.Pow(intersect.coordinate.Y - 0, 2) +
+                                                                 Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
+                        Math.PI * intersect.cosine), 255),
+                    (byte)Math.Min(intersect.color[2] * 0.08 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
+                                                                 Math.Pow(intersect.coordinate.Y - 0, 2) +
+                                                                 Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
+                        Math.PI * intersect.cosine), 255)
+                };
+                return render_result;
+            }
+            else
+            {
+                var new_intersect = root.intersect(ray);
+                var render_result = new[]
+                {
+                    (byte)Math.Min(intersect.color[0] * 0.08 / ((Math.Pow(shade(new_intersect, root)[0] - 0, 2) +
+                                                                 Math.Pow(shade(new_intersect, root)[0] - 0, 2) +
+                                                                 Math.Pow(shade(new_intersect, root)[0] - 0, 2)) * 0.95 /
+                        Math.PI * intersect.cosine), 255),
+                    (byte)Math.Min(intersect.color[1] * 0.08 / ((Math.Pow(shade(new_intersect, root)[1] - 0, 2) +
+                                                                 Math.Pow(shade(new_intersect, root)[1] - 0, 2) +
+                                                                 Math.Pow(shade(new_intersect, root)[1] - 0, 2)) * 0.95 /
+                        Math.PI * intersect.cosine), 255),
+                    (byte)Math.Min(intersect.color[2] * 0.08 / ((Math.Pow(shade(new_intersect, root)[2] - 0, 2) +
+                                                                 Math.Pow(shade(new_intersect, root)[2] - 0, 2) +
+                                                                 Math.Pow(shade(new_intersect, root)[2] - 0, 2)) * 0.95 /
+                        Math.PI * intersect.cosine), 255)
+                };
+                return render_result;
+            }
+        }
+        else
+        {
+            return new byte[] {0, 0, 0};
+        }
+    }*/
 
     /// <summary>
     ///     Randomly sample the path in one pixel
