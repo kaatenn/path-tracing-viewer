@@ -13,7 +13,8 @@ public class Intersection
     public readonly bool happened; // represent if intersected.
     private readonly double t; // represent t of the ray
     public Vector3D coordinate; // represent the intersection coordinate.
-    public Vector3D normal;
+    public Vector3D normal; // represent the normal of the triangle
+    public Triangle? triangle; // represent the hit triangle
 
 
     /// <summary>
@@ -26,6 +27,7 @@ public class Intersection
         coordinate = new Vector3D(0, 0, 0);
         normal = new Vector3D();
         t = 0;
+        triangle = null;
     }
 
     /// <summary>
@@ -36,7 +38,9 @@ public class Intersection
     /// <param name="color">represent the color should be shaded.</param>
     /// <param name="t">represent time of the ray</param>
     /// <param name="cosine">represent the cosine between normal and ray direction</param>
-    public Intersection(bool happened, Vector3D coordinate, byte[] color, double t, double cosine, Vector3D normal)
+    /// <param name="normal">represent the normal of the triangle</param>
+    /// <param name="triangle">represent the hit triangle</param>
+    public Intersection(bool happened, Vector3D coordinate, byte[] color, double t, double cosine, Vector3D normal, Triangle? triangle)
     {
         this.happened = happened;
         if (color.Length != 3) throw new FormatException("Color should be a array in length 3");
@@ -45,6 +49,7 @@ public class Intersection
         this.t = t;
         this.cosine = cosine;
         this.normal = normal;
+        this.triangle = triangle;
     }
 
     public static Intersection not_hit_intersection()
@@ -62,7 +67,7 @@ public class Intersection
     {
         for (var i = 0; i < 3; i++) intersection.color[i] *= (byte)count;
         return new Intersection(intersection.happened, intersection.coordinate, intersection.color, intersection.t,
-            intersection.cosine, intersection.normal);
+            intersection.cosine, intersection.normal, intersection.triangle);
     }
 
     /// <summary>

@@ -16,11 +16,15 @@ namespace _3D_viewer;
 /// <summary>
 ///     Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     private const double TOLERANCE = 1e-7; // For float comparing.
     private readonly Scene_Object scene_object = new(); // the scenes object for shading.
     private readonly WriteableBitmap writeable_bitmap; // The bitmap will be used for shading the image.
+    private const double EYE_FOV = Math.PI * 2 / 3;
+    private bool can_edit = false;
+    private int[] edit_vertex_id = new int[3];
+    private Triangle? edit_triangle;
 
     public Color general_color
     {
@@ -44,7 +48,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         // Initialize the bitmap
         writeable_bitmap =
-            new WriteableBitmap((int)PathTracingImage.Width, (int)PathTracingImage.Width, 96, 96, PixelFormats.Bgr32,
+            new WriteableBitmap((int)PathTracingImage.Width, (int)PathTracingImage.Height, 96, 96, PixelFormats.Bgr32,
                 null);
         Loaded += (_, _) => { PathTracingImage.Source = writeable_bitmap; };
         general_color = Colors.White;
@@ -140,7 +144,7 @@ public partial class MainWindow : Window
 
             var newColor = new byte[3];
             if (scene_object.bvh_tree != null)
-                newColor = Renderer.render_direct(scene_object.bvh_tree, x, y, width, height, Math.PI * 2 / 3);
+                newColor = Renderer.render_direct(scene_object.bvh_tree, x, y, width, height, EYE_FOV);
             pixel_values[index] = newColor[2];
             pixel_values[index + 1] = newColor[1];
             pixel_values[index + 2] = newColor[0];
@@ -272,7 +276,7 @@ public partial class MainWindow : Window
             TrianglePoint2ZTextBox.Text = "";
             TrianglePoint3ZTextBox.Text = "";
             ObjectSelectAddComboBox.Text = "";
-            
+
             AddButton.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x9E, 0xFF));
             refresh_lists();
         }
@@ -287,11 +291,11 @@ public partial class MainWindow : Window
     /// </summary>
     private void read_triangles()
     {
-        
         var triangles = new List<Triangle>();
         using var context = new App_Db_Context();
         var vertices = context.vertices.ToList();
-        var obj_id = context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!.object_id;
+        var obj_id = context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!
+            .object_id;
         var faces = context.faces
             .Where(f => f.object_id == obj_id)
             .ToList();
@@ -310,7 +314,7 @@ public partial class MainWindow : Window
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.x ?? 0,
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.y ?? 0,
                 vertices.FirstOrDefault(v => face.vertex3 != null && v.id == face.vertex3.id)?.z ?? 0);
-            var triangle = new Triangle(triangleVertices, new byte[]
+            var triangle = new Triangle(triangleVertices, new[]
             {
                 detail_color.R, detail_color.G, detail_color.B
             });
@@ -327,10 +331,12 @@ public partial class MainWindow : Window
     /// <param name="e">The instance of the event</param>
     private void refresh_button_click(object sender, RoutedEventArgs e)
     {
+        if (object_rendered_list.Count == 0) return;
         scene_object.clear_triangles();
         read_triangles();
         scene_object.refresh_bvh();
         modify_pixels();
+        PathTracingImage.MouseDown += PathTracingImage_OnMouseDown;
     }
 
     private void ColorDetailPicker_OnMouseDown(object sender, MouseButtonEventArgs e)
@@ -392,11 +398,13 @@ public partial class MainWindow : Window
 
     private void ColorGeneralPicker_OnMouseDown(object sender, MouseButtonEventArgs e)
     {
+        // Add mouse move
         ColorGeneralPicker.MouseMove += ColorGeneralPicker_OnMouseMove;
     }
 
     private void ColorGeneralPicker_OnMouseUp(object sender, MouseButtonEventArgs e)
     {
+        // Release mouse move
         ColorGeneralPicker.MouseMove -= ColorGeneralPicker_OnMouseMove;
     }
 
@@ -463,6 +471,11 @@ public partial class MainWindow : Window
         ColorPickerShow.Background = new SolidColorBrush(detail_color);
     }
 
+    /// <summary>
+    /// Set combo box status, if selected item is "new object..." than allow edit, or show the item
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
     private void ObjectSelectComboBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if ((string)ObjectSelectAddComboBox.SelectedItem != "新建物体...")
@@ -476,5 +489,180 @@ public partial class MainWindow : Window
             ObjectSelectAddComboBox.IsEditable = true;
             e.Handled = true;
         }
+    }
+
+    private void find_triangle_on_pixel(double x, double y)
+    {
+        var width = writeable_bitmap.PixelWidth;
+        var height = writeable_bitmap.PixelHeight;
+        var aspect_radio = width / (double)height;
+        var ray_x = (2 * (x + 0.5) / width - 1) * aspect_radio * Math.Tan(EYE_FOV / 2);
+        var ray_y = (1 - 2 * (y + 0.5) / height) * Math.Tan(EYE_FOV / 2);
+        var ray = new Ray(new Vector3D(0, 0, 0), new Vector3D(ray_x, ray_y, -1));
+        var intersect = scene_object.bvh_tree?.intersect(ray);
+        if (intersect is { happened: true })
+        {
+            edit_triangle = intersect.triangle;
+            UpdateTrianglePoint1XTextBox.Text = edit_triangle?.vertices[0].X.ToString("F7");
+            UpdateTrianglePoint2XTextBox.Text = edit_triangle?.vertices[1].X.ToString("F7");
+            UpdateTrianglePoint3XTextBox.Text = edit_triangle?.vertices[2].X.ToString("F7");
+            UpdateTrianglePoint1YTextBox.Text = edit_triangle?.vertices[0].Y.ToString("F7");
+            UpdateTrianglePoint2YTextBox.Text = edit_triangle?.vertices[1].Y.ToString("F7");
+            UpdateTrianglePoint3YTextBox.Text = edit_triangle?.vertices[2].Y.ToString("F7");
+            UpdateTrianglePoint1ZTextBox.Text = edit_triangle?.vertices[0].Z.ToString("F7");
+            UpdateTrianglePoint2ZTextBox.Text = edit_triangle?.vertices[1].Z.ToString("F7");
+            UpdateTrianglePoint3ZTextBox.Text = edit_triangle?.vertices[2].Z.ToString("F7");
+        }
+    }
+    
+    private void button_update_click(object sender, RoutedEventArgs e)
+    {
+        if (!can_edit)
+        {
+            set_text_box_status(true);
+            UpdateButton.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x9E, 0xFF));
+            using var context = new App_Db_Context();
+            for (int i = 0; i < 3; i++)
+            {
+                edit_vertex_id[i] = context.vertices.FirstOrDefault(v =>
+                    Math.Abs(v.x - edit_triangle!.vertices[i].X) < TOLERANCE &&
+                    Math.Abs(v.y - edit_triangle!.vertices[i].Y) < TOLERANCE &&
+                    Math.Abs(v.z - edit_triangle.vertices[i].Z) < TOLERANCE)!.id;
+            }
+
+            can_edit = true;
+        }
+        else
+        {
+            using var context = new App_Db_Context();
+            var vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[0]);
+            if (vertex != null)
+            {
+                vertex.x = double.Parse(UpdateTrianglePoint1XTextBox.Text);
+                vertex.y = double.Parse(UpdateTrianglePoint1YTextBox.Text);
+                vertex.z = double.Parse(UpdateTrianglePoint1ZTextBox.Text);
+                context.vertices.Update(vertex);
+                context.SaveChanges();
+            }
+            vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[1]);
+            if (vertex != null)
+            {
+                vertex.x = double.Parse(UpdateTrianglePoint2XTextBox.Text);
+                vertex.y = double.Parse(UpdateTrianglePoint2YTextBox.Text);
+                vertex.z = double.Parse(UpdateTrianglePoint2ZTextBox.Text);
+                context.vertices.Update(vertex);
+                context.SaveChanges();
+            }
+            vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[2]);
+            if (vertex != null)
+            {
+                vertex.x = double.Parse(UpdateTrianglePoint3XTextBox.Text);
+                vertex.y = double.Parse(UpdateTrianglePoint3YTextBox.Text);
+                vertex.z = double.Parse(UpdateTrianglePoint3ZTextBox.Text);
+                context.vertices.Update(vertex);
+                context.SaveChanges();
+            }
+
+            edit_vertex_id = new int[3];
+            edit_triangle = null;
+            set_text_box_status(false);
+            scene_object.clear_triangles();
+            read_triangles();
+            scene_object.refresh_bvh();
+            modify_pixels();
+            UpdateButton.Background = new SolidColorBrush(Color.FromRgb(0xE6, 0xA2, 0x3C));
+            can_edit = false;
+            clear_update_text_box();
+        }
+    }
+
+    private void set_text_box_status(bool status)
+    {
+        UpdateTrianglePoint1XTextBox.IsEnabled = status;
+        UpdateTrianglePoint2XTextBox.IsEnabled = status;
+        UpdateTrianglePoint3XTextBox.IsEnabled = status;
+        UpdateTrianglePoint1YTextBox.IsEnabled = status;
+        UpdateTrianglePoint2YTextBox.IsEnabled = status;
+        UpdateTrianglePoint3YTextBox.IsEnabled = status;
+        UpdateTrianglePoint1ZTextBox.IsEnabled = status;
+        UpdateTrianglePoint2ZTextBox.IsEnabled = status;
+        UpdateTrianglePoint3ZTextBox.IsEnabled = status;
+    }
+
+    private void button_delete_click(object sender, RoutedEventArgs e)
+    {
+        using var context = new App_Db_Context();
+        for (int i = 0; i < 3; i++)
+        {
+            edit_vertex_id[i] = context.vertices.FirstOrDefault(v =>
+                Math.Abs(v.x - edit_triangle!.vertices[i].X) < TOLERANCE &&
+                Math.Abs(v.y - edit_triangle!.vertices[i].Y) < TOLERANCE &&
+                Math.Abs(v.z - edit_triangle.vertices[i].Z) < TOLERANCE)!.id;
+        }
+        var selected_object = context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!;
+        var selected_id = selected_object.object_id;
+        var face = context.faces.FirstOrDefault(f =>
+            f.vertex1_id == edit_vertex_id[0] && f.vertex2_id == edit_vertex_id[1] && f.vertex3_id == edit_vertex_id[2] &&
+            f.object_id == selected_id)!;
+        var object_count = context.faces.Where(f => f.object_id == selected_id).ToList().Count;
+        var vertices_counts = new int[3];
+        for (var i = 0; i < 3; i++)
+        {
+            var i1 = i;
+            vertices_counts[i] = context.faces.Where(f =>
+                f.vertex1_id == edit_vertex_id[i1] || f.vertex2_id == edit_vertex_id[i1] || f.vertex3_id == edit_vertex_id[i1]).ToList().Count;
+        }
+
+        context.Remove(face);
+        context.SaveChanges();
+        if (object_count == 1)
+        {
+            context.Remove(selected_object);
+            context.SaveChanges();
+        }
+
+        for (var i = 0; i < 3; i++)
+        {
+            if (vertices_counts[i] == 1)
+            {
+                var remove_vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[i])!;
+                context.Remove(remove_vertex);
+                context.SaveChanges();
+            }
+        }
+        
+        refresh_lists();
+        if (object_rendered_list.Count() != 0)
+        {
+            scene_object.clear_triangles();
+            read_triangles();
+            scene_object.refresh_bvh();
+            modify_pixels(); 
+        }
+
+        clear_update_text_box();
+        edit_vertex_id = new int[3];
+        edit_triangle = null;
+    }
+
+    private void clear_update_text_box()
+    {
+        UpdateTrianglePoint1XTextBox.Text = "";
+        UpdateTrianglePoint2XTextBox.Text = "";
+        UpdateTrianglePoint3XTextBox.Text = "";
+        UpdateTrianglePoint1YTextBox.Text = "";
+        UpdateTrianglePoint2YTextBox.Text = "";
+        UpdateTrianglePoint3YTextBox.Text = "";
+        UpdateTrianglePoint1ZTextBox.Text = "";
+        UpdateTrianglePoint2ZTextBox.Text = "";
+        UpdateTrianglePoint3ZTextBox.Text = "";
+    }
+
+    private void PathTracingImage_OnMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        var mouse_x = Mouse.GetPosition(PathTracingImage).X;
+        var mouse_y = Mouse.GetPosition(PathTracingImage).Y;
+
+        find_triangle_on_pixel(mouse_x, mouse_y);
     }
 }

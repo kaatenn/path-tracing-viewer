@@ -81,6 +81,7 @@ public class Bvh_Tree_Node
         var is_hit = false;
         double cosine = 0;
         Vector3D normal = new Vector3D();
+        Triangle? rt = null;
         Debug.Assert(triangles != null, nameof(triangles) + " != null");
         foreach (var triangle in triangles)
         {
@@ -105,9 +106,10 @@ public class Bvh_Tree_Node
             hit_color = triangle.color;
             is_hit = true;
             normal = n;
+            rt = triangle;
         }
 
-        return new Intersection(is_hit, ray.origin + t_min * ray.direction, hit_color, t_min, cosine, normal);
+        return new Intersection(is_hit, ray.origin + t_min * ray.direction, hit_color, t_min, cosine, normal, rt);
     }
 
     /// <summary>

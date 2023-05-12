@@ -41,7 +41,7 @@
 
                 <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1, 0, 1, 1" Background="#efefef"
                         HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Image x:Name="PathTracingImage" Height="675" Width="720" />
+                    <Image x:Name="PathTracingImage" Height="675" Width="720"/>
                 </Border>
             </Grid>
         </Border>
@@ -187,11 +187,12 @@
                                 <ColumnDefinition Width="2*" />
                             </Grid.ColumnDefinitions>
                             <Grid HorizontalAlignment="Right">
-                                <Button Content="添加" Style="{StaticResource ButtonInfo}"
+                                <Button Content="添加" Style="{StaticResource ButtonPrimary}"
                                         Width="80px"
                                         Click="button_increase_click" Margin="0 0 0 5"
                                         Name="AddButton"
-                                        Background="#409EFF" />
+                                        Background="#409EFF"
+                                        />
                             </Grid>
                             <Grid Column="1">
                                 <ToggleButton hc:Poptip.HitMode="None"
@@ -230,17 +231,17 @@
                                 <TextBox Name="UpdateTrianglePoint1XTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                                 <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="UpdateTrianglePoint1YTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                                 <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="UpdateTrianglePoint1ZTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                             </StackPanel>
                         </Grid>
 
@@ -256,17 +257,17 @@
                                 <TextBox Name="UpdateTrianglePoint2XTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                                 <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="UpdateTrianglePoint2YTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                                 <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="UpdateTrianglePoint2ZTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                             </StackPanel>
                         </Grid>
                         <Grid Grid.Row="3">
@@ -281,39 +282,38 @@
                                 <TextBox Name="UpdateTrianglePoint3XTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                                 <TextBlock Text="Y:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="UpdateTrianglePoint3YTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                                 <TextBlock Text="Z:" Margin="5 0 5 0" VerticalAlignment="Center" />
                                 <TextBox Name="UpdateTrianglePoint3ZTextBox" Margin="5 0 5 0" Width="48"
                                          FontSize="16"
                                          BorderBrush="#409EFF" BorderThickness="2" VerticalAlignment="Center"
-                                         PreviewTextInput="float_text_input_handler" />
+                                         PreviewTextInput="float_text_input_handler" IsEnabled="False"/>
                             </StackPanel>
                         </Grid>
-                        <Grid Grid.Row="5">
+                        <Grid Grid.Row="4">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
                                 <ColumnDefinition Width="2*" />
                             </Grid.ColumnDefinitions>
                             <Grid HorizontalAlignment="Right">
-                                <Button Content="修改" Style="{StaticResource ButtonInfo}"
+                                <Button Content="修改" Style="{StaticResource ButtonWarning}"
                                         Width="80px"
-                                        Click="button_increase_click" Margin="0 0 0 5"
+                                        Click="button_update_click" Margin="0 0 5 5"
                                         Name="UpdateButton"
-                                        Background="#409EFF" />
+                                        Background="#E6A23C"
+                                        />
                             </Grid>
                             <Grid Column="1">
-                                <ToggleButton hc:Poptip.HitMode="None"
-                                              hc:Poptip.IsOpen="{Binding IsChecked,RelativeSource={RelativeSource Self}}"
-                                              hc:Poptip.Content="{StaticResource Rule}"
-                                              hc:Poptip.Placement="Bottom"
-                                              HorizontalAlignment="Left"
-                                              Margin="10 0 0 0"
-                                              Content="规则" />
+                                <Button Content="删除" Style="{StaticResource ButtonDanger}" HorizontalAlignment="Left"
+                                        Width="80px"
+                                        Click="button_delete_click" Margin="5 0 0 5"
+                                        Name="DeleteButton"
+                                        />
                             </Grid>
                         </Grid>
                     </Grid>
