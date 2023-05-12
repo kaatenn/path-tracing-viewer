@@ -491,6 +491,11 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>
+    /// Find the first hit triangle by input coordinate
+    /// </summary>
+    /// <param name="x">The x of the coordinate</param>
+    /// <param name="y">The y of the coordinate</param>
     private void find_triangle_on_pixel(double x, double y)
     {
         var width = writeable_bitmap.PixelWidth;
@@ -515,6 +520,11 @@ public partial class MainWindow
         }
     }
     
+    /// <summary>
+    /// Allow update or update the triangle
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
     private void button_update_click(object sender, RoutedEventArgs e)
     {
         if (!can_edit)
@@ -576,6 +586,10 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>
+    /// Set text box IsEnabled by input status
+    /// </summary>
+    /// <param name="status">The input status</param>
     private void set_text_box_status(bool status)
     {
         UpdateTrianglePoint1XTextBox.IsEnabled = status;
@@ -589,6 +603,11 @@ public partial class MainWindow
         UpdateTrianglePoint3ZTextBox.IsEnabled = status;
     }
 
+    /// <summary>
+    /// Delete the triangle and clear the database
+    /// </summary>
+    /// <param name="sender">The instance of the event sender</param>
+    /// <param name="e">The instance of the event</param>
     private void button_delete_click(object sender, RoutedEventArgs e)
     {
         using var context = new App_Db_Context();
@@ -645,6 +664,9 @@ public partial class MainWindow
         edit_triangle = null;
     }
 
+    /// <summary>
+    /// Clear the Text in all text boxes
+    /// </summary>
     private void clear_update_text_box()
     {
         UpdateTrianglePoint1XTextBox.Text = "";
