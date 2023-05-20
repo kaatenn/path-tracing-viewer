@@ -18,7 +18,6 @@ public class Ray
     public Ray(Vector3D origin, Vector3D direction)
     {
         this.origin = origin;
-        if (this.origin != new Vector3D(0, 0, 0)) this.origin.Normalize();
         this.direction = direction;
         if (this.direction != new Vector3D(0, 0, 0)) this.direction.Normalize();
     }

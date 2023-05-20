@@ -41,7 +41,7 @@ public class Bvh_Tree_Node
     /// <returns></returns>
     public static Bvh_Tree_Node build_bvh(List<Triangle> triangles)
     {
-        if (triangles.Count <= 5) return new Bvh_Tree_Node(new Aabb(triangles), null, null, triangles);
+        if (triangles.Count <= 6) return new Bvh_Tree_Node(new Aabb(triangles), null, null, triangles);
 
         var aabb = new Aabb(triangles);
         var split_axis = aabb.longest_axis();
@@ -136,7 +136,7 @@ public class Bvh_Tree_Node
     /// </summary>
     /// <param name="ray">the checked ray</param>
     /// <returns>the intersect result of the ray</returns>
-    public Intersection intersect(Ray ray)
+    public Intersection intersect_aabb(Ray ray)
     {
         // Check if the ray is intersecting with the node's bounding box
 
@@ -165,8 +165,8 @@ public class Bvh_Tree_Node
             return intersect_triangle(ray);
         }
 
-        var hit1 = left_child!.intersect(ray);
-        var hit2 = right_child!.intersect(ray);
+        var hit1 = left_child!.intersect_aabb(ray);
+        var hit2 = right_child!.intersect_aabb(ray);
 
         return hit1 < hit2 ? hit1 : hit2;
     }

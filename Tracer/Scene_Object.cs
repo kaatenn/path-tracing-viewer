@@ -18,7 +18,7 @@ public class Scene_Object
         bvh_tree = null;
     }
 
-    public Bvh_Tree_Node? bvh_tree { get; set; } // the BVH of the object
+    public Bvh_Tree_Node? bvh_tree { get; private set; } // the BVH of the object
 
     /// <summary>
     ///     Refresh the BVH-Tree by triangles

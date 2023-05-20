@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3D_viewer", "3D_viewer.csproj", "{A1CA7111-8148-485B-BFFA-BD58E627DEAC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3D_viewer", "3D_viewer.csproj", "{A1CA7111-8148-485B-BFFA-BD58E627DEAC}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "3D-Viewer-Setup", "..\3D-Viewer-Setup\3D-Viewer-Setup.vdproj", "{F80A78AE-F639-4D98-B406-0E4D9828AA2F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,8 @@ Global
 		{A1CA7111-8148-485B-BFFA-BD58E627DEAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1CA7111-8148-485B-BFFA-BD58E627DEAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1CA7111-8148-485B-BFFA-BD58E627DEAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F80A78AE-F639-4D98-B406-0E4D9828AA2F}.Debug|Any CPU.ActiveCfg = Debug
+		{F80A78AE-F639-4D98-B406-0E4D9828AA2F}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -29,19 +29,19 @@ public static class Renderer
         for (var i = 0; i < SAMPLE_TIME; i++)
         {
             var ray = ray_generation(screen_x, screen_y, screen_width, screen_height, eye_fov);
-            var intersect = root.intersect(ray);
+            var intersect = root.intersect_aabb(ray);
 
             var render_result = new[]
             {
-                (byte)Math.Min(intersect.color[0] * 0.08 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
+                (byte)Math.Min(intersect.color[0] * 0.06 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
                                                            Math.Pow(intersect.coordinate.Y - 0, 2) +
                                                            Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
                     Math.PI * intersect.cosine), 255),
-                (byte)Math.Min(intersect.color[1] * 0.08 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
+                (byte)Math.Min(intersect.color[1] * 0.06 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
                                                            Math.Pow(intersect.coordinate.Y - 0, 2) +
                                                            Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
                     Math.PI * intersect.cosine), 255),
-                (byte)Math.Min(intersect.color[2] * 0.08 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
+                (byte)Math.Min(intersect.color[2] * 0.06 / ((Math.Pow(intersect.coordinate.X - 0, 2) +
                                                            Math.Pow(intersect.coordinate.Y - 0, 2) +
                                                            Math.Pow(intersect.coordinate.Z - 0, 2)) * 0.95 /
                     Math.PI * intersect.cosine), 255)

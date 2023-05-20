@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using _3D_viewer.models;
 using _3D_viewer.Tracer;
+using Newtonsoft.Json;
 
 namespace _3D_viewer;
 
@@ -86,10 +89,14 @@ public partial class MainWindow
         {
             ObjectSelectRenderedComboBox.IsEnabled = false;
             ButtonRefresh.IsEnabled = false;
+            ReportButton.IsEnabled = false;
         }
         else
         {
             ObjectSelectRenderedComboBox.SelectedIndex = 0;
+            ButtonRefresh.IsEnabled = true;
+            ReportButton.IsEnabled = true;
+            ObjectSelectRenderedComboBox.IsEnabled = true;
         }
     }
 
@@ -178,8 +185,8 @@ public partial class MainWindow
         var value = float.Parse((sender as TextBox)?.Text + e.Text);
 
         // If the input is not between 0 and 1, disable input
-        if ((!((TextBox)sender).Name.Contains('Z') && value is >= -1 and <= 1) ||
-            (((TextBox)sender).Name.Contains('Z') && value is >= -1 and <= 0)) return;
+        if (!((TextBox)sender).Name.Contains('Z') && value is >= -1 and <= 1 ||
+            ((TextBox)sender).Name.Contains('Z') && value is >= -1 and <= 0) return;
 
         ((TextBox)sender).BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0x6C, 0x6C));
 
@@ -266,15 +273,15 @@ public partial class MainWindow
             db_context.faces.Add(new_face);
             db_context.SaveChanges();
 
-            TrianglePoint1XTextBox.Text = "";
-            TrianglePoint2XTextBox.Text = "";
-            TrianglePoint3XTextBox.Text = "";
-            TrianglePoint1YTextBox.Text = "";
-            TrianglePoint2YTextBox.Text = "";
-            TrianglePoint3YTextBox.Text = "";
-            TrianglePoint1ZTextBox.Text = "";
-            TrianglePoint2ZTextBox.Text = "";
-            TrianglePoint3ZTextBox.Text = "";
+            TrianglePoint1XTextBox.Clear();
+            TrianglePoint2XTextBox.Clear();
+            TrianglePoint3XTextBox.Clear();
+            TrianglePoint1YTextBox.Clear();
+            TrianglePoint2YTextBox.Clear();
+            TrianglePoint3YTextBox.Clear();
+            TrianglePoint1ZTextBox.Clear();
+            TrianglePoint2ZTextBox.Clear();
+            TrianglePoint3ZTextBox.Clear();
             ObjectSelectAddComboBox.Text = "";
 
             AddButton.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x9E, 0xFF));
@@ -504,7 +511,7 @@ public partial class MainWindow
         var ray_x = (2 * (x + 0.5) / width - 1) * aspect_radio * Math.Tan(EYE_FOV / 2);
         var ray_y = (1 - 2 * (y + 0.5) / height) * Math.Tan(EYE_FOV / 2);
         var ray = new Ray(new Vector3D(0, 0, 0), new Vector3D(ray_x, ray_y, -1));
-        var intersect = scene_object.bvh_tree?.intersect(ray);
+        var intersect = scene_object.bvh_tree?.intersect_aabb(ray);
         if (intersect is { happened: true })
         {
             edit_triangle = intersect.triangle;
@@ -519,7 +526,7 @@ public partial class MainWindow
             UpdateTrianglePoint3ZTextBox.Text = edit_triangle?.vertices[2].Z.ToString("F7");
         }
     }
-    
+
     /// <summary>
     /// Allow update or update the triangle
     /// </summary>
@@ -540,6 +547,7 @@ public partial class MainWindow
                     Math.Abs(v.z - edit_triangle.vertices[i].Z) < TOLERANCE)!.id;
             }
 
+            DeleteButton.IsEnabled = false;
             can_edit = true;
         }
         else
@@ -554,6 +562,7 @@ public partial class MainWindow
                 context.vertices.Update(vertex);
                 context.SaveChanges();
             }
+
             vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[1]);
             if (vertex != null)
             {
@@ -563,6 +572,7 @@ public partial class MainWindow
                 context.vertices.Update(vertex);
                 context.SaveChanges();
             }
+
             vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[2]);
             if (vertex != null)
             {
@@ -583,6 +593,7 @@ public partial class MainWindow
             UpdateButton.Background = new SolidColorBrush(Color.FromRgb(0xE6, 0xA2, 0x3C));
             can_edit = false;
             clear_update_text_box();
+            DeleteButton.IsEnabled = true;
         }
     }
 
@@ -611,14 +622,16 @@ public partial class MainWindow
     private void button_delete_click(object sender, RoutedEventArgs e)
     {
         using var context = new App_Db_Context();
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             edit_vertex_id[i] = context.vertices.FirstOrDefault(v =>
                 Math.Abs(v.x - edit_triangle!.vertices[i].X) < TOLERANCE &&
                 Math.Abs(v.y - edit_triangle!.vertices[i].Y) < TOLERANCE &&
                 Math.Abs(v.z - edit_triangle.vertices[i].Z) < TOLERANCE)!.id;
         }
-        var selected_object = context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!;
+
+        var selected_object =
+            context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!;
         var selected_id = selected_object.object_id;
         var face = context.faces.FirstOrDefault(f =>
             f.vertex1_id == edit_vertex_id[0] && f.vertex2_id == edit_vertex_id[1] && f.vertex3_id == edit_vertex_id[2] &&
@@ -629,7 +642,9 @@ public partial class MainWindow
         {
             var i1 = i;
             vertices_counts[i] = context.faces.Where(f =>
-                f.vertex1_id == edit_vertex_id[i1] || f.vertex2_id == edit_vertex_id[i1] || f.vertex3_id == edit_vertex_id[i1]).ToList().Count;
+                    f.vertex1_id == edit_vertex_id[i1] || f.vertex2_id == edit_vertex_id[i1] ||
+                    f.vertex3_id == edit_vertex_id[i1])
+                .ToList().Count;
         }
 
         context.Remove(face);
@@ -642,21 +657,19 @@ public partial class MainWindow
 
         for (var i = 0; i < 3; i++)
         {
-            if (vertices_counts[i] == 1)
-            {
-                var remove_vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[i])!;
-                context.Remove(remove_vertex);
-                context.SaveChanges();
-            }
+            if (vertices_counts[i] != 1) continue;
+            var remove_vertex = context.vertices.FirstOrDefault(v => v.id == edit_vertex_id[i])!;
+            context.Remove(remove_vertex);
+            context.SaveChanges();
         }
-        
+
         refresh_lists();
         if (object_rendered_list.Count() != 0)
         {
             scene_object.clear_triangles();
             read_triangles();
             scene_object.refresh_bvh();
-            modify_pixels(); 
+            modify_pixels();
         }
 
         clear_update_text_box();
@@ -669,15 +682,15 @@ public partial class MainWindow
     /// </summary>
     private void clear_update_text_box()
     {
-        UpdateTrianglePoint1XTextBox.Text = "";
-        UpdateTrianglePoint2XTextBox.Text = "";
-        UpdateTrianglePoint3XTextBox.Text = "";
-        UpdateTrianglePoint1YTextBox.Text = "";
-        UpdateTrianglePoint2YTextBox.Text = "";
-        UpdateTrianglePoint3YTextBox.Text = "";
-        UpdateTrianglePoint1ZTextBox.Text = "";
-        UpdateTrianglePoint2ZTextBox.Text = "";
-        UpdateTrianglePoint3ZTextBox.Text = "";
+        UpdateTrianglePoint1XTextBox.Clear();
+        UpdateTrianglePoint2XTextBox.Clear();
+        UpdateTrianglePoint3XTextBox.Clear();
+        UpdateTrianglePoint1YTextBox.Clear();
+        UpdateTrianglePoint2YTextBox.Clear();
+        UpdateTrianglePoint3YTextBox.Clear();
+        UpdateTrianglePoint1ZTextBox.Clear();
+        UpdateTrianglePoint2ZTextBox.Clear();
+        UpdateTrianglePoint3ZTextBox.Clear();
     }
 
     private void PathTracingImage_OnMouseDown(object sender, MouseButtonEventArgs e)
@@ -686,5 +699,45 @@ public partial class MainWindow
         var mouse_y = Mouse.GetPosition(PathTracingImage).Y;
 
         find_triangle_on_pixel(mouse_x, mouse_y);
+    }
+
+    private void ReportButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        using var context = new App_Db_Context();
+        var objects = context.objects.ToList();
+        var records = new List<Record>();
+
+        foreach (var obj in objects)
+        {
+            var record_object = new List<List<Record_Vertex>>();
+            var object_name = obj.object_name;
+            var vertices_list = context.vertices.ToList();
+            var obj_id = context.objects.FirstOrDefault(o => o.object_name == (string)ObjectSelectRenderedComboBox.SelectedItem)!
+                .object_id;
+            var faces = context.faces
+                .Where(f => f.object_id == obj_id)
+                .ToList();
+            foreach (var face in faces)
+            {
+                var vertices = new List<Record_Vertex>();
+                var vertex1 = Record_Vertex.create_from_model(vertices_list.FirstOrDefault(v => v.id == face.vertex1_id));
+                var vertex2 = Record_Vertex.create_from_model(context.vertices.FirstOrDefault(v => v.id == face.vertex2_id));
+                var vertex3 = Record_Vertex.create_from_model(context.vertices.FirstOrDefault(v => v.id == face.vertex3_id));
+                vertices.Add(vertex1);
+                vertices.Add(vertex2);
+                vertices.Add(vertex3);
+                record_object.Add(vertices);
+            }
+
+            var record = new Record(object_name, record_object);
+            records.Add(record);
+        }
+
+        var json = JsonConvert.SerializeObject(records);
+
+        var directory_path = "record";
+        Directory.CreateDirectory(directory_path);
+        var file_path = Path.Combine(directory_path, "record.json");
+        File.WriteAllText(file_path, json);
     }
 }
